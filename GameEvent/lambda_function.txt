@@ -1,0 +1,60 @@
+import json
+import boto3
+
+dynamodb = boto3.resource('dynamodb')
+table = dynamodb.Table('GameEvent')
+
+def lambda_handler(event, context):
+    if event['httpMethod'] == 'GET':
+        response=table.scan()
+        return {
+        'statusCode': 200,
+        'body': json.dumps(response['Items'])
+        }
+    elif event['httpMethod'] == 'POST':
+        if 'body' in event:
+            body=json.loads(event['body'])
+            if 'GameID' in body and 'P1' in body and 'P2' in body and 'P3' in body and 'TimeStamp' in body and 'Winner' in body and 'AverageUserScore' in body:
+                GameID=body['GameID']
+                P1=body['P1']
+                P2=body['P2']
+                P3=body['P3']
+                TimeStamp=body['TimeStamp']
+                Winner=body['Winner']
+                AverageUserScore=body['AverageUserScore']
+                table.put_item(
+                    Item = {
+                        'GameID':GameID,
+                        'P1':P1,
+                        'P2':P2,
+                        'P3':P3,
+                        'TimeStamp':TimeStamp,
+                        'Winner':Winner,
+                        'AverageUserScore':AverageUserScore
+                    }
+                )
+                response=table.get_item(
+                    Key={
+                        'GameID':GameID
+                    }
+                )
+                return {
+                'statusCode': 200,
+                'body': "Event Updated!\n"+json.dumps(response['Item'])
+                }
+            else:
+                return {
+                'statusCode': 200,
+                'body': json.dumps("Missing EventData!")
+                }
+                
+        else:
+            return {
+            'statusCode': 200,
+            'body': json.dumps("Need body!")
+            }
+    else:
+        return {
+        'statusCode': 200,
+        'body': json.dumps("Not Supported Type") 
+        }

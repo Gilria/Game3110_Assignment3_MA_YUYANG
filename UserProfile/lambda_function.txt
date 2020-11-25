@@ -1,0 +1,62 @@
+import json
+import boto3
+from boto3.dynamodb.conditions import Key, Attr
+
+dynamodb = boto3.resource('dynamodb')
+table = dynamodb.Table('Userprofile')
+
+def lambda_handler(event, context):
+    
+    if event['httpMethod'] == 'GET':
+        response=table.scan()
+        return {
+        'statusCode': 200,
+        'body': json.dumps(response['Items'])
+        }
+    
+    elif event['httpMethod'] == 'POST':
+        if 'body' in event:
+            body=json.loads(event['body'])
+            if 'UserID' in body and 'UserWinTurn' in body and 'UserLoseTurn' in body and 'UserScore' in body and 'Kill' in body and 'Death' in body and 'UserLevel' in body:
+                UserID=body['UserID']
+                UserWinTurn=body['UserWinTurn']
+                UserLoseTurn=body['UserLoseTurn']
+                UserScore=body['UserScore']
+                Kill=body['Kill']
+                Death=body['Death']
+                UserLevel=body['UserLevel']
+                table.put_item(
+                    Item = {
+                        'UserID':UserID,
+                        'UserWinTurn':UserWinTurn,
+                        'UserLoseTurn':UserLoseTurn,
+                        'UserScore':UserScore,
+                        'Kill':Kill,
+                        'Death':Death,
+                        'UserLevel':UserLevel
+                    }
+                )
+                response=table.get_item(
+                    Key={
+                        'UserID':UserID
+                    }
+                )
+                return {
+                'statusCode': 200,
+                'body': "Player Updated!\n"+json.dumps(response['Item'])
+                }
+            else:
+                return {
+                'statusCode': 200,
+                'body': json.dumps("Missing UserData!")
+                }
+        else:
+            return {
+            'statusCode': 200,
+            'body': json.dumps("Need body!")
+            }
+    else:
+        return {
+        'statusCode': 200,
+        'body': json.dumps("Not Supported Type")
+        }
